@@ -7,7 +7,7 @@
 -author("Abhay Kumar <abhay@opensynapse.net>").
 
 -export([start/1, stop/0, loop/2]).
-
+-export([rpc_handler/2]).
 %% External API
 
 start(Options) ->
@@ -22,22 +22,27 @@ stop() ->
 
 loop(Req, DocRoot) ->
     "/" ++ Path = Req:get(path),
-    case Req:get(method) of
-        Method when Method =:= 'GET'; Method =:= 'HEAD' ->
-            case Path of
-                _ ->
-                    Req:serve_file(Path, DocRoot)
-            end;
-        'POST' ->
-            case Path of
-                _ ->
-                    Req:not_found()
-            end;
-        _ ->
-            Req:respond({501, [], []})
+    case {Path, Req:get(method), Req:get_header_value('Content-Type')} of
+      {"rpc", 'POST', "application/json"} ->
+        jsonrpc:handler(Req, {?MODULE, rpc_handler});
+      {_, Method, _} when Method =:= 'GET'; Method =:= 'HEAD' ->
+        Req:serve_file(Path, DocRoot);
+      {_, 'POST', _} ->
+        Req:not_found();
+      {_, _, _} ->
+        Req:respond({501, [], []})
     end.
 
 %% Internal API
+
+rpc_handler(_Req, {call, Method, Params}) ->
+  case Method of
+    echo ->
+      {array, [Message]} = Params,
+      {result, Message};
+    _ ->
+      {error, "method not implemented."}
+  end.
 
 get_option(Option, Options) ->
     {proplists:get_value(Option, Options), proplists:delete(Option, Options)}.

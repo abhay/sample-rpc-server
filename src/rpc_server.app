@@ -2,6 +2,7 @@
  [{description, "rpc_server"},
   {vsn, "0.01"},
   {modules, [
+    jsonrpc,
     rpc_server,
     rpc_server_app,
     rpc_server_sup,
