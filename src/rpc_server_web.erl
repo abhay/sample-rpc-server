@@ -24,7 +24,7 @@ loop(Req, DocRoot) ->
     "/" ++ Path = Req:get(path),
     case {Path, Req:get(method), Req:get_header_value('Content-Type')} of
       {"rpc", 'POST', "application/json"} ->
-        jsonrpc:handler(Req, {?MODULE, rpc_handler});
+        mochiweb_rpc:handler(Req, {?MODULE, rpc_handler});
       {_, Method, _} when Method =:= 'GET'; Method =:= 'HEAD' ->
         Req:serve_file(Path, DocRoot);
       {_, 'POST', _} ->
